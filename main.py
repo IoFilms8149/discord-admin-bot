@@ -26,8 +26,8 @@ async def on_ready():
         print(f"Failed to sync commands: {e}")
 #Ping Command
 @bot.tree.command(name = "ping", description="Tells the latency (ms) of the bot")
-async def ping(interatction: discord.Interaction):
-    await interatction.response.send_message(f'Pong! :ping_pong: {bot.latency * 1000:.2f} ms')
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message(f'Pong! :ping_pong: {bot.latency * 1000:.2f} ms')
 
 # Kick command
 @bot.tree.command(name="kick", description="Kicks a member from the server.")
@@ -38,11 +38,24 @@ async def kick(interaction: discord.Interaction, member: discord.Member, reason:
     target = str(member.display_name)
     try:
         await member.kick(reason=reason)
-        await interaction.followup.send(f"✅ Sucessfully kicked **{target}**!")
+        await interaction.followup.send(f"✅ Successfully kicked **{target}**!")
         print(f"Terminal Log: Kicked {target}")
     except discord.Forbidden:
         await interaction.followup.send("❌ Not high enough permissions to kick that user.")
     except Exception as e:
         print(f"LOG ERROR: {e}") 
-        await interaction.send(f"⚠️ An error occurred: {e}")
+        await interaction.followup.send(f"⚠️ An error occurred: {e}")
+
+# Clear command
+@bot.tree.command(name="clear", description="Clears a specified amount of messages.")
+@app_commands.describe(amount = "The amount of messages to be cleared")
+@app_commands.checks.has_permissions(manage_messages=True)
+async def clear(interaction: discord.Interaction, amount: int):
+    await interaction.response.send_message(f"Clearing {amount} messages...", ephemeral=True)
+    cleared = await interaction.channel.purge(limit=amount)
+    try:
+        await interaction.edit_original_response(content=f"✅ Successfully cleared {len(cleared)} messages.")
+    except Exception as e:
+        print(f"LOG ERROR: {e}") 
+        await interaction.followup.send(f"⚠️ An error occurred: {e}")
 bot.run(BOT_TOKEN)
