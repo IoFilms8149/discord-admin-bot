@@ -58,4 +58,33 @@ async def clear(interaction: discord.Interaction, amount: int):
     except Exception as e:
         print(f"LOG ERROR: {e}") 
         await interaction.followup.send(f"⚠️ An error occurred: {e}")
+# Ban Command
+@bot.tree.command(name="ban", description="Bans a specific person.")
+@app_commands.describe(member="The member to ban", reason="Reason for the ban")
+@app_commands.checks.has_permissions(ban_members=True)
+async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
+    await interaction.response.defer(ephemeral=True)
+    target = str(member.display_name)
+
+    try:
+        await member.ban(reason=reason, delete_message_seconds=3600)
+        await interaction.followup.send(content=f"✅Successfully banned **{target}**.")
+        print(f"Terminal log: Banned {target}")
+    except Exception as e:
+        print(f"LOG ERROR: {e}")
+        await interaction.followup.send(content=f"⚠️ An error occurred: {e}")
+#Unban Command
+@bot.tree.command(name="unban", description="Unbans a banned member.")
+@app_commands.describe(user_id="The ID of the member you want to unban")
+@app_commands.checks.has_permissions(ban_members=True)
+async def unban(interaction: discord.Interaction, user_id: str):
+    await interaction.response.defer(ephemeral=True)
+    try:
+        user = await bot.fetch_user(int(user_id))
+        await interaction.guild.unban(user)
+        await interaction.followup.send(content=f"✅Unbanned {user.name}")
+    except Exception as e:
+        print(f"LOG ERROR: {e}")
+        await interaction.followup.send(content=f"⚠️ An error occurred: {e}")
+
 bot.run(BOT_TOKEN)
