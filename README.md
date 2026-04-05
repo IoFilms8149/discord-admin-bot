@@ -2,10 +2,12 @@
 
 This is a discord python bot designed for server moderation.
 
-## Features:
--Secure Bot Configuration: Uses python-dotenv to keep your bot token private.
--Latency Tracking: Has a /ping command to check bot responsiveness.
--Moderation Commands: Includes /kick, /ban or /unban, and /clear commands for server modeartion.
+## Features
+
+- **Secure Bot Configuration**: Uses `python-dotenv` to keep your bot token private.
+- **Latency Tracking**: Has a `/ping` command to check bot responsiveness.
+- **Moderation Commands**: Includes `/kick`, `/ban`, `/unban`, and `/clear` for server moderation.
+
 ## SET UP:
 1. **Clone the repo** (or download the files).
 2. **Install the requirements**: 
