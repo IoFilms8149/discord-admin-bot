@@ -24,18 +24,36 @@ async def on_ready():
         print(f"Successfully synced {len(synced)} commands.")
     except Exception as e:
         print(f"Failed to sync commands: {e}")
+#Help Command
+@bot.tree.command(name="help", description="Provides a list with a description of each command")
+async def help(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="**ADMIN BOT HELP MENU**",
+        description="Here is a list of all available commands",
+        color=discord.Colour.blue()
+        )
+    embed.add_field(name="/ping", value="Check the bot's latency.", inline=False)
+    embed.add_field(name="/kick [member] [reason]", value="Kicks a member from the server.", inline=False)
+    embed.add_field(name="/ban [member] [reason]", value="Bans a member from the server.", inline=False)
+    embed.add_field(name="/unban [user_id]", value="Unbans an already banned member.", inline=False)
+    embed.add_field(name="/clear [amount]", value="Deletes a certaina amount of messages.", inline=False)
+    await interaction.response.send_message(embed=embed)
 #Ping Command
-@bot.tree.command(name = "ping", description="Tells the latency (ms) of the bot")
+@bot.tree.command(name="ping", description="Tells the latency (ms) of the bot")
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(f'Pong! :ping_pong: {bot.latency * 1000:.2f} ms')
 
 # Kick command
 @bot.tree.command(name="kick", description="Kicks a member from the server.")
-@app_commands.describe(member="The user to kick", reason = "The reason for the kick")
+@app_commands.describe(member="The user to kick", reason="The reason for the kick")
 @app_commands.checks.has_permissions(kick_members=True)
 async def kick(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     await interaction.response.defer(ephemeral=True)
     target = str(member.display_name)
+    try:
+        await member.send(f"⚠️You have been kicked from **{interaction.guild.name}**.\n**Reason:** {reason}")
+    except discord.Forbidden:
+        print(f"Could not DM {member.display_name}.")
     try:
         await member.kick(reason=reason)
         await interaction.followup.send(f"✅ Successfully kicked **{target}**!")
@@ -65,7 +83,10 @@ async def clear(interaction: discord.Interaction, amount: int):
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     await interaction.response.defer(ephemeral=True)
     target = str(member.display_name)
-
+    try:
+        await member.send(f"⚠️You have been banned from **{interaction.guild.name}**.\n**Reason:** {reason}")
+    except discord.Forbidden:
+        print(f"Could not DM {member.display_name}.")
     try:
         await member.ban(reason=reason, delete_message_seconds=3600)
         await interaction.followup.send(content=f"✅Successfully banned **{target}**.")
@@ -83,6 +104,7 @@ async def unban(interaction: discord.Interaction, user_id: str):
         user = await bot.fetch_user(int(user_id))
         await interaction.guild.unban(user)
         await interaction.followup.send(content=f"✅Unbanned {user.name}")
+        print(f"Terminal Log: Unbanned {user.name}")
     except Exception as e:
         print(f"LOG ERROR: {e}")
         await interaction.followup.send(content=f"⚠️ An error occurred: {e}")
