@@ -1,4 +1,5 @@
 import discord
+import asyncio
 import os
 from discord.ext import commands
 from discord import app_commands
@@ -24,7 +25,7 @@ async def on_ready():
         print(f"Successfully synced {len(synced)} commands.")
     except Exception as e:
         print(f"Failed to sync commands: {e}")
-#Help Command
+# Help Command
 @bot.tree.command(name="help", description="Provides a list with a description of each command")
 async def help(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -36,9 +37,10 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/kick [member] [reason]", value="Kicks a member from the server.", inline=False)
     embed.add_field(name="/ban [member] [reason]", value="Bans a member from the server.", inline=False)
     embed.add_field(name="/unban [user_id]", value="Unbans an already banned member.", inline=False)
+    embed.add_field(name="/tempban [member] [minutes] [reason]", value="Temporarily bans a member for a set amount of time", inline=False)
     embed.add_field(name="/clear [amount]", value="Deletes a certaina amount of messages.", inline=False)
     await interaction.response.send_message(embed=embed)
-#Ping Command
+# Ping Command
 @bot.tree.command(name="ping", description="Tells the latency (ms) of the bot")
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(f'Pong! :ping_pong: {bot.latency * 1000:.2f} ms')
@@ -76,6 +78,24 @@ async def clear(interaction: discord.Interaction, amount: int):
     except Exception as e:
         print(f"LOG ERROR: {e}") 
         await interaction.followup.send(f"⚠️ An error occurred: {e}")
+# Tempban Command
+@bot.tree.command(name="tempban", description="Bans a member for a set amount of time")
+async def tempban(interaction: discord.Interaction, member: discord.Member, minutes: int, reason: str = "No reason provided"):
+    await interaction.response.defer(ephemeral=True)
+    try:
+        await member.send(f"⚠️You have been termporarilly banned from **{interaction.guild.name}** for {minutes} minute(s).\n**Reason:** {reason}")
+    except discord.Forbidden:
+        print(f"Could not DM {member.display_name}.")
+    try:
+        await member.ban(reason=reason, delete_message_seconds=3600)
+        await interaction.followup.send(f"✅ Banned {member.display_name} for {minutes} minute(s)")
+
+        await asyncio.sleep(minutes * 60)
+        await interaction.guild.unban(member)
+        print(f"Terminal Log: Member {member.display_name} has been unbanned")
+    except Exception as e:
+        print(f"LOG ERROR: {e}")
+        await interaction.followup.send(content=f"⚠️ An error occurred: {e}")
 # Ban Command
 @bot.tree.command(name="ban", description="Bans a specific person.")
 @app_commands.describe(member="The member to ban", reason="Reason for the ban")
