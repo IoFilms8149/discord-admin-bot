@@ -16,6 +16,20 @@ intents.members = True
 
 # Create bot and client instances
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Create DM embed when banned, tempbanned, or kicked
+def create_dm_embed(action, guild_name, reason, colour, duration=None):
+    embed = discord.Embed(
+        title=f"⚠️ {action} Notification",
+        description=f"This message is to notify you of a formal moderation action taken within **{guild_name}**.",
+        color=colour
+    )
+    if duration:
+        embed.add_field(name="Duration:", value=f"{duration} minute(s)", inline=False)
+    embed.add_field(name="Reason:", value=reason, inline=False)
+    embed.set_footer(text="Please contact an admin if you believe this was an error.")
+    return embed
+
 # Define events and commands for the bot
 @bot.event
 async def on_ready():
@@ -51,11 +65,12 @@ async def ping(interaction: discord.Interaction):
 @app_commands.checks.has_permissions(kick_members=True)
 async def kick(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     await interaction.response.defer(ephemeral=True)
+    dm_embed = create_dm_embed("Kick", interaction.guild.name, reason, discord.Color.orange())
     target = str(member.display_name)
     try:
-        await member.send(f"⚠️You have been kicked from **{interaction.guild.name}**.\n**Reason:** {reason}")
+        await member.send(embed=dm_embed)
     except discord.Forbidden:
-        print(f"Could not DM {member.display_name}.")
+        print(f"Could not DM {member.display_name}")
     try:
         await member.kick(reason=reason)
         await interaction.followup.send(f"✅ Successfully kicked **{target}**!")
@@ -82,10 +97,11 @@ async def clear(interaction: discord.Interaction, amount: int):
 @bot.tree.command(name="tempban", description="Bans a member for a set amount of time")
 async def tempban(interaction: discord.Interaction, member: discord.Member, minutes: int, reason: str = "No reason provided"):
     await interaction.response.defer(ephemeral=True)
+    dm_embed = create_dm_embed("Tempban", interaction.guild.name, reason, discord.Color.yellow(), duration=minutes)
     try:
-        await member.send(f"⚠️You have been termporarilly banned from **{interaction.guild.name}** for {minutes} minute(s).\n**Reason:** {reason}")
+        await member.send(embed=dm_embed)
     except discord.Forbidden:
-        print(f"Could not DM {member.display_name}.")
+        print(f"Could not DM {member.display_name}")
     try:
         await member.ban(reason=reason, delete_message_seconds=3600)
         await interaction.followup.send(f"✅ Banned {member.display_name} for {minutes} minute(s)")
@@ -103,10 +119,11 @@ async def tempban(interaction: discord.Interaction, member: discord.Member, minu
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
     await interaction.response.defer(ephemeral=True)
     target = str(member.display_name)
+    dm_embed = create_dm_embed("Ban", interaction.guild.name, reason, discord.Color.red())
     try:
-        await member.send(f"⚠️You have been banned from **{interaction.guild.name}**.\n**Reason:** {reason}")
+        await member.send(embed=dm_embed)
     except discord.Forbidden:
-        print(f"Could not DM {member.display_name}.")
+        print(f"Could not DM {member.display_name}")
     try:
         await member.ban(reason=reason, delete_message_seconds=3600)
         await interaction.followup.send(content=f"✅Successfully banned **{target}**.")
