@@ -18,7 +18,8 @@ class MyBot(commands.Bot):
 
     async def setup_hook(self):
         await self.load_extension("cogs.utility")
-        await self.load_extension('cogs.moderation')
+        await self.load_extension("cogs.moderation")
+        await self.load_extension("cogs.stats")
         try:
             synced = await self.tree.sync()
             print(f"Successfully synced {len(synced)} commands.")
