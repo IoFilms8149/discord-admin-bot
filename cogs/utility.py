@@ -40,10 +40,28 @@ class Utility(commands.Cog):
         embed.add_field(name="/ban [member] [reason]", value="Bans a member from the server.", inline=False)
         embed.add_field(name="/clear [amount]", value="Deletes a certaina amount of messages.", inline=False)
         embed.add_field(name="/kick [member] [reason]", value="Kicks a member from the server.", inline=False)
+        embed.add_field(name="/rank", value="Checks the user's XP and level.", inline=False)
         embed.add_field(name="/ping", value="Check the bot's latency.", inline=False)
         embed.add_field(name="/tempban [member] [minutes] [reason]", value="Temporarily bans a member for a set amount of time", inline=False) 
         embed.add_field(name="/unban [user_id]", value="Unbans an already banned member.", inline=False)
         embed.add_field(name="userinfo [member]", value="Gets information about a member and their roles.", inline=False)
+        await interaction.response.send_message(embed=embed)
+    # Server Info Command
+    @app_commands.command(name="serverinfo", description="Displays information about the server.")
+    async def serverinfo(self, interaction: discord.Interaction):
+        guild = interaction.guild
+        embed = discord.Embed(
+            title=f"Server Information: {guild.name}",
+            color=discord.Color.blue()
+        )
+        created_date = guild.created_at.strftime("%d/%m/%y")
+        if guild.icon:
+            embed.set_thumbnail(url=guild.icon.url)
+        embed.add_field(name="Owner", value=guild.owner.mention, inline=False)
+        embed.add_field(name="Members", value=guild.member_count, inline=False)
+        embed.add_field(name="Roles", value=len(guild.roles), inline=False)
+        embed.add_field(name="Created on:", value=created_date, inline=False)
+        embed.set_footer(text=f"Server ID: {guild.id}")
         await interaction.response.send_message(embed=embed)
 async def setup(bot):
     await bot.add_cog(Utility(bot))
