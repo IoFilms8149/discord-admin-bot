@@ -51,7 +51,7 @@ class Utility(commands.Cog):
     async def serverinfo(self, interaction: discord.Interaction):
         guild = interaction.guild
         embed = discord.Embed(
-            title=f"Server Information: {guild.name}",
+            title=f"📊 Server Information: {guild.name}",
             color=discord.Color.blue()
         )
         created_date = guild.created_at.strftime("%d/%m/%y")

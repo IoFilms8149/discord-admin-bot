@@ -48,6 +48,27 @@ class Stats(commands.Cog):
             await interaction.response.send_message(f"**{interaction.user.display_name}**, you are **Level {level}** with **{xp} XP**!")
         else:
             await interaction.response.send_message("You haven't sent any messages yet!")
+    @app_commands.command(name="leaderboard", description="Shows the top 10 users with the highest XP")
+    async def leaderboard(self, interaction: discord.Interaction):
+        con = sqlite3.connect("users.db")
+        cur = con.cursor()
+        cur.execute("""SELECT user_id, xp, level FROM levels ORDER BY xp DESC LIMIT 10""")
+        rows = cur.fetchall()
+        con.close()
+
+        embed = discord.Embed(
+            title="🏆 Server Leaderboard:",
+            color=discord.Color.blue()
+        )
+        description = ""
+        for i, row in enumerate(rows, start=1):
+            user_id, xp, level = row
+            member = interaction.guild.get_member(user_id)
+            name = member.display_name if member else f"User {user_id}"
+            description += f"**{i}. {name}:** Level {level} ({xp} XP)\n"
+        embed.description = description
+        await interaction.response.send_message(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Stats(bot))
