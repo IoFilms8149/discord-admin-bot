@@ -2,10 +2,22 @@ import discord
 import asyncio
 from discord import app_commands
 from discord.ext import commands
+import sqlite3
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.con = sqlite3.connect("users.db")
+        self.cur = self.con.cursor()
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS warnings (
+            user_id INTEGER,
+            guild_id INTEGER,
+            reason TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        self.con.commit()
     def create_dm_embed(self, action, guild_name, reason, colour, duration = None):
         embed = discord.Embed(
         title=f"⚠️ {action} Notification",
@@ -18,6 +30,45 @@ class Moderation(commands.Cog):
         embed.add_field(name="Reason:", value=reason, inline=False)
         embed.set_footer(text="Please contact an admin if you believe this was an error.")
         return embed
+    # Warn Command
+    @app_commands.command(name="warn", description="Warn a member for breaking rules.")
+    @app_commands.checks.has_permissions(manage_messages=True)
+    @app_commands.describe(member="The user to warn", reason="Reason for the warn")
+    async def warn(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
+        self.cur.execute("INSERT INTO warnings (user_id, guild_id, reason) VALUES (?, ?, ?)",
+        (member.id, interaction.guild.id, reason)
+        )
+        self.con.commit()
+        self.cur.execute("SELECT COUNT(*) FROM warnings WHERE user_id = ? AND guild_id = ?", 
+        (member.id, interaction.guild.id)
+        )
+        warn_count = self.cur.fetchone()[0]
+        dm_embed = self.create_dm_embed("Warn", interaction.guild.name, reason, discord.Color.orange())
+        try:
+            await member.send(embed=dm_embed)
+        except discord.Forbidden:
+            print(f"Could not DM {member.display_name}")
+        embed = discord.Embed(title="⚠️ User Warned", color=discord.Color.red())
+        embed.add_field(name="User", value=member.mention, inline=True)
+        embed.add_field(name="Moderator", value=interaction.user.mention, inline=True)
+        embed.add_field(name="Total Warnings", value=str(warn_count), inline=True)
+        embed.add_field(name="Reason", value=reason, inline=False)
+        await interaction.response.send_message(embed=embed)
+        if warn_count >= 3:
+            auto_reason = f"Automatic tempban: Reached {warn_count} warnings."
+            minutes = 60
+            auto_ban = self.create_dm_embed("Automated Tempban", interaction.guild.name, auto_reason, discord.Color.dark_red(), duration=minutes)
+            try:
+                await member.send(embed=auto_ban)
+            except:
+                pass
+            await member.ban(reason=auto_reason, delete_message_seconds=0)
+            await interaction.channel.send(f"🚨{member.mention} has been automatically banned for 1 hour. (3+ warnings).")
+            async def run_unban():
+                await asyncio.sleep(minutes * 60)
+                await interaction.guild.unban(member)
+                print(f"Terminal Log: {member.display_name} auto-unbanned.")
+            asyncio.create_task(run_unban())
     # Kick Command
     @app_commands.command(name="kick", description="Kicks a member from the server.")
     @app_commands.describe(member="The user to kick", reason="The reason for the kick")
@@ -65,9 +116,12 @@ class Moderation(commands.Cog):
             await member.ban(reason=reason, delete_message_seconds=3600)
             await interaction.followup.send(f"✅ Banned {member.display_name} for {minutes} minute(s)")
 
-            await asyncio.sleep(minutes * 60)
-            await interaction.guild.unban(member)
-            print(f"Terminal Log: Member {member.display_name} has been unbanned")
+            async def run_unban():
+                await asyncio.sleep(minutes * 60)
+                await interaction.guild.unban(member)
+                print(f"Terminal Log: {member.display_name} auto-unbanned.")
+                
+            asyncio.create_task(run_unban())
         except Exception as e:
             print(f"LOG ERROR: {e}")
             await interaction.followup.send(content=f"⚠️ An error occurred: {e}")
