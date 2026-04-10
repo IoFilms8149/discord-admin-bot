@@ -1,6 +1,6 @@
 .env
 *.pyc
 __pycache__/
-
+users.db-journal
 users.db
 *.db

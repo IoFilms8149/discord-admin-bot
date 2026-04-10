@@ -4,6 +4,7 @@ import os
 from discord.ext import commands
 from discord import app_commands
 from dotenv import load_dotenv
+import sqlite3
 
 load_dotenv()
 
@@ -15,7 +16,6 @@ class MyBot(commands.Bot):
         intents.message_content = True
         intents.members = True
         super().__init__(command_prefix="!", intents=intents)
-
     async def setup_hook(self):
         await self.load_extension("cogs.utility")
         await self.load_extension("cogs.moderation")

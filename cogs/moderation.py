@@ -1,12 +1,14 @@
 import discord
 import asyncio
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 import sqlite3
+import math
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.ping.start()
         self.con = sqlite3.connect("users.db")
         self.cur = self.con.cursor()
         self.cur.execute("""
@@ -18,6 +20,24 @@ class Moderation(commands.Cog):
             )
         """)
         self.con.commit()
+    @commands.Cog.listener()
+    async def on_ready(self):
+        con = sqlite3.connect("users.db")
+        con.execute("CREATE TABLE IF NOT EXISTS server_info (id INTEGER PRIMARY KEY, name TEXT, latency INTEGER)")
+        if self.bot.guilds:
+            name = self.bot.guilds[0].name
+            con.execute("INSERT OR REPLACE INTO server_info (id, name) VALUES (1, ?)", (name,))
+        con.commit()
+        con.close()
+    @tasks.loop(seconds=60)
+    async def ping(self):
+        if not self.bot.is_ready() or math.isnan(self.bot.latency):
+            return
+        latency = round(self.bot.latency * 1000)
+        con = sqlite3.connect("users.db")
+        con.execute("INSERT OR REPLACE INTO server_info (id, name, latency) VALUES (1, ((SELECT name FROM server_info WHERE id=1)), ?)", (latency,))
+        con.commit()
+        con.close()
     def create_dm_embed(self, action, guild_name, reason, colour, duration = None):
         embed = discord.Embed(
         title=f"⚠️ {action} Notification",
