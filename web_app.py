@@ -7,16 +7,21 @@ app = Flask(__name__)
 def home():
     try:
         con = sqlite3.connect("users.db")
+        con.row_factory = sqlite3.Row
         cur = con.cursor()
         cur.execute("SELECT COUNT(*) FROM warnings")
         count = cur.fetchone()[0]
-        cur.execute("SELECT name FROM server_info WHERE id = 1")
-        result = cur.fetchone()        
-        guild_id = result[0] if result else "No Server Data"
-        cur.execute("SELECT latency FROM server_info WHERE id = 1")
-        latency = cur.fetchone()[0]
+        cur.execute("SELECT name, latency, status, member_count, role_count, date_created FROM server_info WHERE id = 1")
+        info = cur.fetchone()        
+        guild_id = info["name"] if info else "Unknown Server"
+        latency = info["latency"] if info else 0
+        status = info["status"] if info else "Offline"
+        member_count = info["member_count"] if info else 0
+        role_count = info["role_count"] if info else 0
+        date_created = info["date_created"] if info else "Error"
         con.close()
-        return render_template("index.html", count=count, guild_id=guild_id, latency=latency)
+        status = "Offline"
+        return render_template("index.html", count=count, guild_id=guild_id, latency=latency, status=status, member_count=member_count, role_count=role_count, date_created=date_created)
 
         
     except Exception as e:

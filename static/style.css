@@ -12,6 +12,9 @@ h2 {
     color: white;
     text-align: center;
 }
+h3 {
+    text-decoration: underline;
+}
 .card {
     color: white;
 }

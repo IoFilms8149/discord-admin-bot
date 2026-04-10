@@ -4,6 +4,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 import sqlite3
 import math
+import datetime
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
@@ -23,7 +24,16 @@ class Moderation(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         con = sqlite3.connect("users.db")
-        con.execute("CREATE TABLE IF NOT EXISTS server_info (id INTEGER PRIMARY KEY, name TEXT, latency INTEGER)")
+        con.execute("""CREATE TABLE IF NOT EXISTS server_info (
+            id INTEGER PRIMARY KEY, 
+            name TEXT, 
+            latency INTEGER,
+            status TEXT DEFAULT "Offline",
+            member_count INTEGER,
+            role_count INTEGER,
+            date_created TEXT
+            )
+        """)
         if self.bot.guilds:
             name = self.bot.guilds[0].name
             con.execute("INSERT OR REPLACE INTO server_info (id, name) VALUES (1, ?)", (name,))
@@ -33,9 +43,26 @@ class Moderation(commands.Cog):
     async def ping(self):
         if not self.bot.is_ready() or math.isnan(self.bot.latency):
             return
+        guild = self.bot.guilds[0]
         latency = round(self.bot.latency * 1000)
+        member_count = guild.member_count
+        roles = len(guild.roles)
+        date = guild.created_at.strftime("%d %B %Y")
         con = sqlite3.connect("users.db")
-        con.execute("INSERT OR REPLACE INTO server_info (id, name, latency) VALUES (1, ((SELECT name FROM server_info WHERE id=1)), ?)", (latency,))
+        con.execute("""
+        UPDATE server_info 
+        SET latency = ?, 
+        status = 'Online', 
+        member_count = ?,
+        role_count = ?,
+        date_created = ?,
+        WHERE id = 1""" (latency, member_count, roles, date)
+        )
+        con.commit()
+        con.close()
+    async def disconnect(self):
+        con = sqlite3.connect("users.db")
+        con.execute("UPDATE server_info SET status = 'Offline' WHERE id = 1")
         con.commit()
         con.close()
     def create_dm_embed(self, action, guild_name, reason, colour, duration = None):

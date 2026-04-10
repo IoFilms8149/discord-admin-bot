@@ -15,6 +15,19 @@
         </ul>
     </nav>
     <h2>Server Name: <strong>{{ guild_id }}</strong></h2>
-    <p class="card">Total Warning Count: <strong>{{ count }}</strong><br>Bot latency: <strong>{{ latency }}ms</strong></p>
+    <h3 class="card">Bot Status:</h3>
+    <p class="card">
+    Bot status: <strong>{{ status }}</strong>
+    <br>Bot latency: <strong>{{ latency }}ms</strong>
+    </p>
+    <h3 class="card">Server Statistics:</h3>
+    <p class="card">
+    Member Count: <strong>{{ member_count }}</strong>
+    <br>Role Count: <strong>{{ role_count }}</strong>
+    <br>Date Created: <strong>{{ date_created }}</strong>
+    </p>
+    <h3 class="card">Moderation Action Count:</h3>
+    <p class="card">Total Warning Count: <strong>{{ count }}</strong>
+    </p>
 </body>
 </html>
