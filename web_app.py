@@ -36,6 +36,18 @@ def logs():
         return render_template("logs.html", logs=logs)
     except Exception as e:
         return f"Error loading logs: {e}"
+@app.route("/leaderboard")
+def leaderboard():
+    try:
+        con = sqlite3.connect("users.db")
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute("SELECT username, user_id, level, xp FROM levels ORDER BY level DESC, xp DESC LIMIT 10")
+        users = cur.fetchall()
+        con.close
+        return render_template("leaderboard.html",users=users)
+    except Exception as e:
+        return f"Error loading leaderboard: {e}"
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

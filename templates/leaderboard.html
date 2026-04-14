@@ -1,11 +1,11 @@
-<!D HTML>
+<!DOCTYPE HTML>
 <html>
 <head>
     <title>Bot Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Discord Moderation Log</h1>
+    <h1>Server Leaderboard</h1>
     <nav class="navbar">
         <div class="nav-logo">Bot Control</div>
         <ul class="links">
@@ -17,19 +17,19 @@
     <table>
         <thead>
             <tr>
-                <td>User ID</td>
-                <td>Action</td>
-                <td>Reason</td>
-                <td>Timestamp</td>
+                <td>Rank</td>
+                <td>User</td>
+                <td>Level</td>
+                <td>XP</td>
             </tr>
         </thead>
         <tbody>
-            {% for logs in logs %}
+            {% for user in users %}
             <tr>
-                <td>{{ logs["user_id"] }}</td>
-                <td>{{ logs["action"] }}</td>
-                <td>{{ logs["reason"] }}</td>
-                <td>{{ logs["timestamp"] }}</td>
+                <td>#{{ loop.index }}</td>
+                <td>{{ user["username"] if user["username"] else user["user_id"] }}</td>
+                <td>{{ user["level"] }}</td>
+                <td>{{ user["xp"] }}</td>
             </tr>
             {% endfor %}
         </tbody>

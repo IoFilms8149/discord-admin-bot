@@ -13,6 +13,7 @@ class Stats(commands.Cog):
         self.cur.execute("""
             CREATE TABLE IF NOT EXISTS levels (
                 user_id INTEGER PRIMARY KEY,
+                username TEXT,
                 xp INTEGER DEFAULT 0,
                 level INTEGER DEFAULT 1
             )
@@ -24,9 +25,10 @@ class Stats(commands.Cog):
         if message.author.bot:
             return
         user_id = message.author.id
+        username = message.author.name
         self.cur.execute("""
-        INSERT INTO levels (user_id, xp) VALUES (?, 5) ON CONFLICT(user_id) DO UPDATE SET xp = xp + 5
-        """, (user_id,))
+        INSERT INTO levels (user_id, username, xp) VALUES (?, ?, 5) ON CONFLICT(user_id) DO UPDATE SET xp = xp + 5, username = excluded.username
+        """, (user_id, username))
         self.con.commit()
 
         self.cur.execute("SELECT xp, level FROM levels WHERE user_id = ?", (user_id,))
