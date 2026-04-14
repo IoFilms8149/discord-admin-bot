@@ -25,6 +25,7 @@ h3 {
     background-color: black;
     align-items: center;
     border: 1px solid #444;
+    margin-bottom: 40px;
 }
 .links {
     display: flex;
@@ -36,7 +37,34 @@ h3 {
     color: #7289da;
     font-size: 1.5rem;
     font-weight: bold;
+    padding-left: 20px;
 }
 .links a:hover {
     color: #7289da;
+}
+
+table {
+    width: 100%;
+    display: table;
+    border-collapse: collapse;
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    margin-top: 50px;
+    overflow: hidden;
+}
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #2a2a2a;
+}
+tr {
+    color: white;
+}
+.user-id {
+    font-family: monospace;
+    color: #7289da;
+}
+td {
+    color: white;
+    font-size: 0.95rem;
 }

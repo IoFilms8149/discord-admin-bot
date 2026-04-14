@@ -1,0 +1,38 @@
+<!doctype HTML>
+<html>
+<head>
+    <title>Bot Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Discord Moderation Log</h1>
+    <nav class="navbar">
+        <div class="nav-logo">Bot Control</div>
+        <ul class="links">
+            <li><a href="/">Dashboard</a></li>
+            <li><a href="/logs">Moderation Logs</a></li>
+            <li><a href="/leaderboard">Leaderboard</a></li>
+        </ul>
+    </nav>
+    <table>
+        <thead>
+            <tr>
+                <td>User ID</td>
+                <td>Action</td>
+                <td>Reason</td>
+                <td>Timestamp</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for logs in logs %}
+            <tr>
+                <td>{{ logs["user_id"] }}</td>
+                <td>{{ logs["action"] }}</td>
+                <td>{{ logs["reason"] }}</td>
+                <td>{{ logs["timestamp"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
