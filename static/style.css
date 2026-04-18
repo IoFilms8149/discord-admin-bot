@@ -32,6 +32,8 @@ h3 {
     list-style: none;
     gap: 40px;
     color: white;
+    flex-grow: 1; 
+    margin-right: 20px; 
 }
 .nav-logo {
     color: #7289da;
@@ -67,4 +69,11 @@ tr {
 td {
     color: white;
     font-size: 0.95rem;
+}
+.search {
+    margin-right: auto;
+}
+.search form {
+    display: flex;
+    gap: 5px;
 }

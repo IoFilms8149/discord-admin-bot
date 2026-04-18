@@ -9,9 +9,14 @@
     <nav class="navbar">
         <div class="nav-logo">Bot Control</div>
         <ul class="links">
-            <li><a href="/">Dashboard</a></li>
-            <li><a href="/logs">Moderation Logs</a></li>
-            <li><a href="/leaderboard">Leaderboard</a></li>
+            <li><a href="/" style="color: #5865F2; text-decoration: none; font-weight: bold;">Dashboard</a></li>
+            <li><a href="/logs" style="color: #5865F2; text-decoration: none; font-weight: bold;">Moderation Logs</a></li>
+            <li><a href="/leaderboard" style="color: #5865F2; text-decoration: none; font-weight: bold;">Leaderboard</a></li>
+            <li class="search">
+                <form action="/search", method="post">
+                <input type="text" name="target_id" placeholder="User ID:">
+                <button type="submit">Search</button>
+            </li>
         </ul>
     </nav>
     <table>
@@ -27,7 +32,13 @@
             {% for user in users %}
             <tr>
                 <td>#{{ loop.index }}</td>
-                <td>{{ user["username"] if user["username"] else user["user_id"] }}</td>
+                <td>
+                    <a href="/profile/{{ user['user_id'] }}" style="text-decoration: none; color: inherit;">
+                        <strong>
+                            {{ user["username"] if user["username"] else user["user_id"] }}
+                        </strong>
+                    </a>
+                </td>
                 <td>{{ user["level"] }}</td>
                 <td>{{ user["xp"] }}</td>
             </tr>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 
 app = Flask(__name__)
@@ -65,6 +65,31 @@ def leaderboard():
         return render_template("leaderboard.html",users=users)
     except Exception as e:
         return f"Error loading leaderboard: {e}"
-
+@app.route("/search", methods =["POST"])
+def search():
+    user_id = request.form.get("target_id")
+    if user_id and user_id.isdigit():
+        return redirect(url_for("profile", user_id=user_id))
+    return redirect(url_for("index"))
+@app.route("/profile/<int:user_id>")
+def profile(user_id):
+    try:
+        con = sqlite3.connect("users.db")
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute("SELECT * FROM levels WHERE user_id = ?", (user_id,))
+        user_data = cur.fetchone()
+        cur.execute("SELECT action, reason, timestamp FROM mod_logs WHERE user_id = ? ORDER BY rowid DESC LIMIT 5", (user_id,))
+        user_logs = cur.fetchall()
+        con.close()
+        if user_data:
+            return render_template("profile.html", 
+                                   user_data=user_data, 
+                                   user_logs=user_logs
+                                   )
+        else:
+            return "User not found", 404
+    except Exception as e:
+        return f"Error loading profile: {e}"
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

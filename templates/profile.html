@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Discord Moderation Log</h1>
+    <h1>User Profile</h1>
     <nav class="navbar">
         <div class="nav-logo">Bot Control</div>
         <ul class="links">
@@ -19,27 +19,21 @@
             </li>
         </ul>
     </nav>
-    <table>
-        <thead>
-            <tr>
-                <td>Username</td>
-                <td>User ID</td>
-                <td>Action</td>
-                <td>Reason</td>
-                <td>Timestamp</td>
-            </tr>
-        </thead>
-        <tbody>
-            {% for logs in logs %}
-            <tr>
-                <td>{{ logs["name"] }}</td>
-                <td>{{ logs["user_id"] }}</td>
-                <td>{{ logs["action"] }}</td>
-                <td>{{ logs["reason"] }}</td>
-                <td>{{ logs["timestamp"] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h2><strong>{{ user_data["username"] }}'s profile</strong></h2>
+    <h3 class="card">Member Information:</h3>
+    <p class="card">
+    User ID: <strong>{{ user_data["user_id"] }}</strong>
+    <br>Level: <strong>{{ user_data["level"] }}</strong>
+    <br>XP: <strong>{{ user_data["xp"] }}</strong>
+    </p>
+    <h3 class="card">Recent Activity</h3>
+    <ul>
+        {% for log in logs %}
+            <li>{{ log["action"] }}: {{ log["reason"] }}</li>
+        {% endfor %}
+    </ul>
+    <button>
+    <a href="/leaderboard">Back to leaderboard</a>
+    </button>
 </body>
 </html>
