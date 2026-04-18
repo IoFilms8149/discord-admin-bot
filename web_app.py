@@ -11,6 +11,12 @@ def home():
         cur = con.cursor()
         cur.execute("SELECT COUNT(*) FROM mod_logs")
         count = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM mod_logs WHERE action = 'Warn'")
+        warn_count = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM mod_logs WHERE action = 'Ban'")
+        ban_count = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM mod_logs WHERE action = 'Kick'")
+        kick_count = cur.fetchone()[0]
         cur.execute("SELECT name, latency, status, member_count, role_count, date_created FROM server_info WHERE id = 1")
         info = cur.fetchone()        
         guild_id = info["name"] if info else "Unknown Server"
@@ -21,7 +27,18 @@ def home():
         date_created = info["date_created"] if info else "Error"
         con.close()
         status = "Offline"
-        return render_template("index.html", count=count, guild_id=guild_id, latency=latency, status=status, member_count=member_count, role_count=role_count, date_created=date_created)
+        return render_template("index.html", 
+                               count=count, 
+                               warn_count=warn_count, 
+                               kick_count=kick_count, 
+                               ban_count=ban_count, 
+                               guild_id=guild_id, 
+                               latency=latency, 
+                               status=status, 
+                               member_count=member_count, 
+                               role_count=role_count, 
+                               date_created=date_created
+                               )
     except Exception as e:
         return f"<h1>Error</h1><p>{e}</p>"
 @app.route("/logs")

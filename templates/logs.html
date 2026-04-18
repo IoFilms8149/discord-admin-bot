@@ -17,6 +17,7 @@
     <table>
         <thead>
             <tr>
+                <td>Username</td>
                 <td>User ID</td>
                 <td>Action</td>
                 <td>Reason</td>
@@ -26,6 +27,7 @@
         <tbody>
             {% for logs in logs %}
             <tr>
+                <td>{{ logs["name"] }}</td>
                 <td>{{ logs["user_id"] }}</td>
                 <td>{{ logs["action"] }}</td>
                 <td>{{ logs["reason"] }}</td>

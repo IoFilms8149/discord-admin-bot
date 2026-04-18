@@ -34,12 +34,13 @@ class Stats(commands.Cog):
         self.cur.execute("SELECT xp, level FROM levels WHERE user_id = ?", (user_id,))
         xp, level = self.cur.fetchone()
         # Levels a member up
-        new_level = xp // 100
-        if new_level > level:
-            self.cur.execute("UPDATE levels SET level = ? WHERE user_id = ?", (new_level, user_id))
+        new_level = 5 * (level ** 2) + 50 * level + 100
+        if xp >= new_level:
+            actual_new_level = level + 1
+            self.cur.execute("UPDATE levels SET level = ? WHERE user_id = ?", (actual_new_level, user_id,))
             self.con.commit()
 
-            await message.channel.send(f"{message.author.mention} has leveled up to **Level {new_level}**!")
+            await message.channel.send(f"{message.author.mention} has leveled up to **Level {actual_new_level}**!")
     # Checks the user's rank
     @app_commands.command(name="rank", description="Checks your current XP and level")
     async def rank(self, interaction: discord.Interaction):

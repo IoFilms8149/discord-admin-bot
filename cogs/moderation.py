@@ -15,6 +15,7 @@ class Moderation(commands.Cog):
         self.cur.execute("""
             CREATE TABLE IF NOT EXISTS mod_logs (
             user_id INTEGER,
+            name TEXT,
             action TEXT,
             guild_id INTEGER,
             reason TEXT,
@@ -83,11 +84,11 @@ class Moderation(commands.Cog):
     @app_commands.checks.has_permissions(manage_messages=True)
     @app_commands.describe(member="The user to warn", reason="Reason for the warn")
     async def warn(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
-        self.cur.execute("INSERT INTO mod_logs (user_id, guild_id, action, reason) VALUES (?, ?, ?, ?)",
-        (member.id, interaction.guild.id, "Warn", reason)
+        self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+        (member.id, member.name, interaction.guild.id, "Warn", reason)
         )
         self.con.commit()
-        self.cur.execute("SELECT COUNT(*) FROM mod_logs WHERE user_id = ? AND guild_id = ?", 
+        self.cur.execute("SELECT COUNT(*) FROM mod_logs WHERE user_id = ? AND guild_id = ? AMD action = 'Warn'", 
         (member.id, interaction.guild.id)
         )
         warn_count = self.cur.fetchone()[0]
@@ -122,8 +123,8 @@ class Moderation(commands.Cog):
     @app_commands.describe(member="The user to kick", reason="The reason for the kick")
     @app_commands.checks.has_permissions(kick_members=True)
     async def kick(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
-        self.cur.execute("INSERT INTO mod_logs (user_id, guild_id, action, reason) VALUES (?, ?, ?, ?)",
-        (member.id, interaction.guild.id, "Kick", reason))
+        self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+        (member.id, member.name, interaction.guild.id, "Kick", reason))
         self.con.commit()
         await interaction.response.defer(ephemeral=True)
         dm_embed = self.create_dm_embed("Kick", interaction.guild.name, reason, discord.Color.orange())
@@ -157,8 +158,8 @@ class Moderation(commands.Cog):
     @app_commands.command(name="tempban", description="Bans a member for a set amount of time")
     @app_commands.checks.has_permissions(ban_members=True)
     async def tempban(self, interaction: discord.Interaction, member: discord.Member, minutes: int, reason: str = "No reason provided"):
-        self.cur.execute("INSERT INTO mod_logs (user_id, guild_id, action, reason) VALUES (?, ?, ?, ?)",
-        (member.id, interaction.guild.id, "Tempban", reason))
+        self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+        (member.id, member.name, interaction.guild.id, "Tempban", reason))
         self.con.commit()
         await interaction.response.defer(ephemeral=True)
         dm_embed = self.create_dm_embed("Tempban", interaction.guild.name, reason, discord.Color.yellow(), duration=minutes)
@@ -184,8 +185,8 @@ class Moderation(commands.Cog):
     @app_commands.describe(member="The member to ban", reason="Reason for the ban")
     @app_commands.checks.has_permissions(ban_members=True)
     async def ban(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
-        self.cur.execute("INSERT INTO mod_logs (user_id, guild_id, action, reason) VALUES (?, ?, ?, ?)",
-        (member.id, interaction.guild.id, "Ban", reason))
+        self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+        (member.id, member.name, interaction.guild.id, "Ban", reason))
         self.con.commit()
         await interaction.response.defer(ephemeral=True)
         target = str(member.display_name)
@@ -206,15 +207,19 @@ class Moderation(commands.Cog):
     @app_commands.describe(user_id="The ID of the member you want to unban")
     @app_commands.checks.has_permissions(ban_members=True)
     async def unban(self, interaction: discord.Interaction, user_id: str):
-        self.cur.execute("INSERT INTO mod_logs (user_id, guild_id, action, reason) VALUES (?, ?, ?, ?)",
-        (user_id, interaction.guild.id, "Unban", "Staff revoked ban"))
-        self.con.commit()
         await interaction.response.defer(ephemeral=True)
         try:
             user = await self.bot.fetch_user(int(user_id))
             await interaction.guild.unban(user)
             await interaction.followup.send(content=f"✅Unbanned {user.name}")
             print(f"Terminal Log: Unbanned {user.name}")
+            self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+            (user.id, user.name, interaction.guild.id, "Unban", "Staff revoked ban"))
+            self.con.commit()
+        except discord.NotFound:
+            await interaction.followup.send(content=f"⚠️ User ID does not exist.")
+        except discord.Forbidden:
+            await interaction.followup.send(content=f"⚠️ Insufficient permissions to unban.")
         except Exception as e:
             print(f"LOG ERROR: {e}")
             await interaction.followup.send(content=f"⚠️ An error occurred: {e}")
