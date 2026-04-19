@@ -88,7 +88,7 @@ class Moderation(commands.Cog):
         (member.id, member.name, interaction.guild.id, "Warn", reason)
         )
         self.con.commit()
-        self.cur.execute("SELECT COUNT(*) FROM mod_logs WHERE user_id = ? AND guild_id = ? AMD action = 'Warn'", 
+        self.cur.execute("SELECT COUNT(*) FROM mod_logs WHERE user_id = ? AND guild_id = ? AND action = 'Warn'", 
         (member.id, interaction.guild.id)
         )
         warn_count = self.cur.fetchone()[0]

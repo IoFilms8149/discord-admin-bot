@@ -13,13 +13,16 @@
             <li><a href="/logs" style="color: #5865F2; text-decoration: none; font-weight: bold;">Moderation Logs</a></li>
             <li><a href="/leaderboard" style="color: #5865F2; text-decoration: none; font-weight: bold;">Leaderboard</a></li>
             <li class="search">
-                <form action="/search", method="post">
+                <form action="/search" method="post">
                 <input type="text" name="target_id" placeholder="User ID:">
                 <button type="submit">Search</button>
             </li>
         </ul>
     </nav>
     <h2><strong>{{ user_data["username"] }}'s profile</strong></h2>
+    <div class="profile-header">
+    <img src="{{ user_data['avatar_url'] or 'https://cdn.discordapp.com/embed/avatars/0.png' }}" alt="Profile Picture" class="profile-pic"> 
+    </div> 
     <h3 class="card">Member Information:</h3>
     <p class="card">
     User ID: <strong>{{ user_data["user_id"] }}</strong>
@@ -28,8 +31,8 @@
     </p>
     <h3 class="card">Recent Activity</h3>
     <ul>
-        {% for log in logs %}
-            <li>{{ log["action"] }}: {{ log["reason"] }}</li>
+        {% for log in user_logs %}
+            <li class="card"><strong>{{ log["action"] }}:</strong> {{ log["reason"] }}</li>
         {% endfor %}
     </ul>
     <button>

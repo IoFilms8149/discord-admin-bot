@@ -14,6 +14,7 @@ class Stats(commands.Cog):
             CREATE TABLE IF NOT EXISTS levels (
                 user_id INTEGER PRIMARY KEY,
                 username TEXT,
+                avatar_url TEXT,
                 xp INTEGER DEFAULT 0,
                 level INTEGER DEFAULT 1
             )
@@ -26,6 +27,8 @@ class Stats(commands.Cog):
             return
         user_id = message.author.id
         username = message.author.name
+        avatar_url = str(message.author.avatar.url) if message.author.avatar else "https://cdn.discordapp.com/embed/avatars/0.png" 
+        self.cur.execute("UPDATE LEVELS SET avatar_url = ? WHERE user_id = ?", (avatar_url, user_id,))
         self.cur.execute("""
         INSERT INTO levels (user_id, username, xp) VALUES (?, ?, 5) ON CONFLICT(user_id) DO UPDATE SET xp = xp + 5, username = excluded.username
         """, (user_id, username))
