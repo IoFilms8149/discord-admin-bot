@@ -2,6 +2,33 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+class HelpView(discord.ui.View):
+    def __init__(self, bot):
+        super().__init__(timeout=60)
+        self.bot = bot
+        
+    @discord.ui.button(label="General", style=discord.ButtonStyle.blurple)
+    async def general_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="General Commands", color=discord.Color.blurple())
+        embed.add_field(name="/ping", value="Check the bot's latency.", inline=False)
+        embed.add_field(name="/serverinfo", value="Displays information about the server.", inline=False)
+        embed.add_field(name="userinfo [member]", value="Gets information about a member and their roles.", inline=False)
+        await interaction.response.edit_message(embed=embed)
+    @discord.ui.button(label="Moderation", style=discord.ButtonStyle.red)
+    async def moderation_button(self, interation: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="Moderation Commands", color=discord.Color.red())
+        embed.add_field(name="/ban [member] [reason]", value="Bans a member from the server.", inline=False)
+        embed.add_field(name="/clear [amount]", value="Deletes a certaina amount of messages.", inline=False)
+        embed.add_field(name="/kick [member] [reason]", value="Kicks a member from the server.", inline=False)
+        embed.add_field(name="/tempban [member] [minutes] [reason]", value="Temporarily bans a member for a set amount of time", inline=False) 
+        embed.add_field(name="/unban [user_id]", value="Unbans an already banned member.", inline=False)
+        await interation.response.edit_message(embed=embed)
+    @discord.ui.button(label="Leveling", style=discord.ButtonStyle.green)
+    async def leveling_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="Leveling and XP", color=discord.Color.green())
+        embed.add_field(name="/rank", value="Checks the user's XP and level.", inline=False)
+        embed.add_field(name="/leaderboard", value="Displays the most active members of the server.", inline=False)
+        await interaction.response.edit_message(embed=embed)
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -34,18 +61,11 @@ class Utility(commands.Cog):
     async def help(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="**ADMIN BOT HELP MENU**",
-            description="Here is a list of all available commands",
+            description="Select a category to view commands.",
             color=discord.Colour.blue()
             )
-        embed.add_field(name="/ban [member] [reason]", value="Bans a member from the server.", inline=False)
-        embed.add_field(name="/clear [amount]", value="Deletes a certaina amount of messages.", inline=False)
-        embed.add_field(name="/kick [member] [reason]", value="Kicks a member from the server.", inline=False)
-        embed.add_field(name="/rank", value="Checks the user's XP and level.", inline=False)
-        embed.add_field(name="/ping", value="Check the bot's latency.", inline=False)
-        embed.add_field(name="/tempban [member] [minutes] [reason]", value="Temporarily bans a member for a set amount of time", inline=False) 
-        embed.add_field(name="/unban [user_id]", value="Unbans an already banned member.", inline=False)
-        embed.add_field(name="userinfo [member]", value="Gets information about a member and their roles.", inline=False)
-        await interaction.response.send_message(embed=embed)
+        view = HelpView(self.bot)
+        await interaction.response.send_message(embed=embed, view=view)
     # Server Info Command
     @app_commands.command(name="serverinfo", description="Displays information about the server.")
     async def serverinfo(self, interaction: discord.Interaction):
