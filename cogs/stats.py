@@ -3,6 +3,52 @@ from discord import app_commands
 from discord.ext import commands
 import sqlite3
 
+class leaderboarview(discord.ui.View):
+    def __init__(self, bot, total_pages):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.current_page = 0
+        self.total_pages = total_pages
+    async def get_page_embed(self):
+        offset = self.current_page * 10
+
+        con = sqlite3.connect("users.db")
+        cursor = con.cursor()
+        cursor.execute("SELECT username, xp FROM levels ORDER BY xp DESC LIMIT 10 OFFSET ?", (offset,))
+        data = cursor.fetchall()
+        con.close()
+        embed = discord.Embed(
+            title="🏆 Server Leaderboard:",
+            description=f"Top Members (Page {self.current_page + 1})",
+            color=discord.Color.gold(),
+            )
+        if not data:
+                embed.description = "No more users found on this page."
+        else:
+                for index, (name, xp) in enumerate(data):
+                    rank = index + 1 + offset
+                    embed.add_field(name=f"{rank}. {name}", value=f"{xp} XP", inline=False)
+            
+        return embed
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.gray)
+    async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+            embed = await self.get_page_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
+        else:
+            await interaction.response.send_message("You're already on the first page!", ephemeral=True)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.gray)
+    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page += 1
+        embed = await self.get_page_embed()
+        if "No more users" in embed.description:
+            self.current_page -= 1
+            await interaction.response.send_message("No more pages available!", ephemeral=True)
+        else:
+            await interaction.response.edit_message(embed=embed, view=self)
 
 class Stats(commands.Cog):
     def __init__(self, bot):
@@ -54,26 +100,14 @@ class Stats(commands.Cog):
             await interaction.response.send_message(f"**{interaction.user.display_name}**, you are **Level {level}** with **{xp} XP**!")
         else:
             await interaction.response.send_message("You haven't sent any messages yet!")
-    @app_commands.command(name="leaderboard", description="Shows the top 10 users with the highest XP")
+    @app_commands.command(name="leaderboard", description="Check which members have the highest amount of XP")
     async def leaderboard(self, interaction: discord.Interaction):
-        con = sqlite3.connect("users.db")
-        cur = con.cursor()
-        cur.execute("""SELECT user_id, xp, level FROM levels ORDER BY xp DESC LIMIT 10""")
-        rows = cur.fetchall()
-        con.close()
-
-        embed = discord.Embed(
-            title="🏆 Server Leaderboard:",
-            color=discord.Color.blue()
-        )
-        description = ""
-        for i, row in enumerate(rows, start=1):
-            user_id, xp, level = row
-            member = interaction.guild.get_member(user_id)
-            name = member.display_name if member else f"User {user_id}"
-            description += f"**{i}. {name}:** Level {level} ({xp} XP)\n"
-        embed.description = description
-        await interaction.response.send_message(embed=embed)
+        self.cur.execute("SELECT COUNT(*) FROM levels")
+        total_users = self.cur.fetchone()[0]
+        total_pages = (total_users - 1) // 10 + 1 if total_users > 0 else 1
+        view = leaderboarview(self.bot, total_pages)
+        embed = await view.get_page_embed()
+        await interaction.response.send_message(embed=embed, view=view)
 
 
 async def setup(bot):

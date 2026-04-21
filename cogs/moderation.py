@@ -23,6 +23,7 @@ class Moderation(commands.Cog):
             )
         """)
         self.con.commit()
+
     @commands.Cog.listener()
     async def on_ready(self):
         con = sqlite3.connect("users.db")
@@ -41,6 +42,7 @@ class Moderation(commands.Cog):
             con.execute("INSERT OR REPLACE INTO server_info (id, name) VALUES (1, ?)", (name,))
         con.commit()
         con.close()
+
     @tasks.loop(seconds=60)
     async def ping(self):
         if not self.bot.is_ready() or math.isnan(self.bot.latency):
@@ -62,11 +64,13 @@ class Moderation(commands.Cog):
         )
         con.commit()
         con.close()
+
     async def disconnect(self):
         con = sqlite3.connect("users.db")
         con.execute("UPDATE server_info SET status = 'Offline' WHERE id = 1")
         con.commit()
         con.close()
+        
     def create_dm_embed(self, action, guild_name, reason, colour, duration = None):
         embed = discord.Embed(
         title=f"⚠️ {action} Notification",
