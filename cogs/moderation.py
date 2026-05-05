@@ -2,46 +2,48 @@ import discord
 import asyncio
 from discord import app_commands
 from discord.ext import commands, tasks
-import sqlite3
 import math
-import datetime
+from db import get_db
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ping.start()
-        self.con = sqlite3.connect("users.db")
-        self.cur = self.con.cursor()
-        self.cur.execute("""
-            CREATE TABLE IF NOT EXISTS mod_logs (
-            user_id INTEGER,
-            name TEXT,
-            action TEXT,
-            guild_id INTEGER,
-            reason TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        self.con.commit()
+        with get_db() as con:
+            con.execute("""
+                CREATE TABLE IF NOT EXISTS mod_logs (
+                user_id INTEGER,
+                name TEXT,
+                action TEXT,
+                guild_id INTEGER,
+                reason TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            con.execute("""
+                CREATE TABLE IF NOT EXISTS server_info (
+                id INTEGER PRIMARY KEY, 
+                name TEXT, 
+                latency INTEGER,
+                status TEXT DEFAULT "Offline",
+                member_count INTEGER,
+                role_count INTEGER,
+                date_created TEXT
+                )
+            """)
 
     @commands.Cog.listener()
     async def on_ready(self):
-        con = sqlite3.connect("users.db")
-        con.execute("""CREATE TABLE IF NOT EXISTS server_info (
-            id INTEGER PRIMARY KEY, 
-            name TEXT, 
-            latency INTEGER,
-            status TEXT DEFAULT "Offline",
-            member_count INTEGER,
-            role_count INTEGER,
-            date_created TEXT
-            )
-        """)
+        if not self.ping.is_running():
+            self.ping.start()
         if self.bot.guilds:
             name = self.bot.guilds[0].name
-            con.execute("INSERT OR REPLACE INTO server_info (id, name) VALUES (1, ?)", (name,))
-        con.commit()
-        con.close()
+            with get_db() as con:
+                con.execute(
+                    "INSERT OR REPLACE INTO server_info (id, name) VALUES (1, ?)",
+                    (name,)
+                    )
+    def cog_unload(self):
+        self.ping.cancel()
 
     @tasks.loop(seconds=60)
     async def ping(self):
@@ -52,24 +54,20 @@ class Moderation(commands.Cog):
         member_count = guild.member_count
         roles = len(guild.roles)
         date = guild.created_at.strftime("%d %B %Y")
-        con = sqlite3.connect("users.db")
-        con.execute("""
-        UPDATE server_info 
-        SET latency = ?, 
-        status = 'Online', 
-        member_count = ?,
-        role_count = ?,
-        date_created = ?
-        WHERE id = 1""", (latency, member_count, roles, date)
-        )
-        con.commit()
-        con.close()
+        with get_db() as con:
+            con.execute("""
+            UPDATE server_info 
+            SET latency = ?, 
+            status = 'Online', 
+            member_count = ?,
+            role_count = ?,
+            date_created = ?
+            WHERE id = 1""", (latency, member_count, roles, date,)
+            )
 
     async def disconnect(self):
-        con = sqlite3.connect("users.db")
-        con.execute("UPDATE server_info SET status = 'Offline' WHERE id = 1")
-        con.commit()
-        con.close()
+        with get_db() as con:
+            con.execute("UPDATE server_info SET status = 'Offline' WHERE id = 1")
         
     def create_dm_embed(self, action, guild_name, reason, colour, duration = None):
         embed = discord.Embed(
@@ -88,14 +86,13 @@ class Moderation(commands.Cog):
     @app_commands.checks.has_permissions(manage_messages=True)
     @app_commands.describe(member="The user to warn", reason="Reason for the warn")
     async def warn(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
-        self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+        with get_db() as con:
+            con.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
         (member.id, member.name, interaction.guild.id, "Warn", reason)
         )
-        self.con.commit()
-        self.cur.execute("SELECT COUNT(*) FROM mod_logs WHERE user_id = ? AND guild_id = ? AND action = 'Warn'", 
+            warn_count = con.execute("SELECT COUNT(*) FROM mod_logs WHERE user_id = ? AND guild_id = ? AND action = 'Warn'", 
         (member.id, interaction.guild.id)
-        )
-        warn_count = self.cur.fetchone()[0]
+        ).fetchone()[0]
         dm_embed = self.create_dm_embed("Warn", interaction.guild.name, reason, discord.Color.orange())
         try:
             await member.send(embed=dm_embed)
@@ -127,9 +124,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(member="The user to kick", reason="The reason for the kick")
     @app_commands.checks.has_permissions(kick_members=True)
     async def kick(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
-        self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+        with get_db() as con:
+            con.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
         (member.id, member.name, interaction.guild.id, "Kick", reason))
-        self.con.commit()
         await interaction.response.defer(ephemeral=True)
         dm_embed = self.create_dm_embed("Kick", interaction.guild.name, reason, discord.Color.orange())
         target = str(member.display_name)
@@ -162,9 +159,9 @@ class Moderation(commands.Cog):
     @app_commands.command(name="tempban", description="Bans a member for a set amount of time")
     @app_commands.checks.has_permissions(ban_members=True)
     async def tempban(self, interaction: discord.Interaction, member: discord.Member, minutes: int, reason: str = "No reason provided"):
-        self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+        with get_db() as con:
+            con.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
         (member.id, member.name, interaction.guild.id, "Tempban", reason))
-        self.con.commit()
         await interaction.response.defer(ephemeral=True)
         dm_embed = self.create_dm_embed("Tempban", interaction.guild.name, reason, discord.Color.yellow(), duration=minutes)
         try:
@@ -189,9 +186,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(member="The member to ban", reason="Reason for the ban")
     @app_commands.checks.has_permissions(ban_members=True)
     async def ban(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
-        self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+        with get_db() as con:
+            con.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
         (member.id, member.name, interaction.guild.id, "Ban", reason))
-        self.con.commit()
         await interaction.response.defer(ephemeral=True)
         target = str(member.display_name)
         dm_embed = self.create_dm_embed("Ban", interaction.guild.name, reason, discord.Color.red())
@@ -217,9 +214,9 @@ class Moderation(commands.Cog):
             await interaction.guild.unban(user)
             await interaction.followup.send(content=f"✅Unbanned {user.name}")
             print(f"Terminal Log: Unbanned {user.name}")
-            self.cur.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
+            with get_db() as con:
+                con.execute("INSERT INTO mod_logs (user_id, name, guild_id, action, reason) VALUES (?, ?, ?, ?, ?)",
             (user.id, user.name, interaction.guild.id, "Unban", "Staff revoked ban"))
-            self.con.commit()
         except discord.NotFound:
             await interaction.followup.send(content=f"⚠️ User ID does not exist.")
         except discord.Forbidden:

@@ -15,14 +15,14 @@ class HelpView(discord.ui.View):
         embed.add_field(name="userinfo [member]", value="Gets information about a member and their roles.", inline=False)
         await interaction.response.edit_message(embed=embed)
     @discord.ui.button(label="Moderation", style=discord.ButtonStyle.red)
-    async def moderation_button(self, interation: discord.Interaction, button: discord.ui.Button):
+    async def moderation_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(title="Moderation Commands", color=discord.Color.red())
         embed.add_field(name="/ban [member] [reason]", value="Bans a member from the server.", inline=False)
         embed.add_field(name="/clear [amount]", value="Deletes a certaina amount of messages.", inline=False)
         embed.add_field(name="/kick [member] [reason]", value="Kicks a member from the server.", inline=False)
         embed.add_field(name="/tempban [member] [minutes] [reason]", value="Temporarily bans a member for a set amount of time", inline=False) 
         embed.add_field(name="/unban [user_id]", value="Unbans an already banned member.", inline=False)
-        await interation.response.edit_message(embed=embed)
+        await interaction.response.edit_message(embed=embed)
     @discord.ui.button(label="Leveling", style=discord.ButtonStyle.green)
     async def leveling_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(title="Leveling and XP", color=discord.Color.green())
@@ -50,7 +50,7 @@ class Utility(commands.Cog):
                 title=f"User Info - {member.display_name}",
                 color=member.color
             )
-        embed.set_thumbnail(url=member.display_name if not member.avatar else member.avatar.url)
+        embed.set_thumbnail(url=member.display_name if member.avatar else "https://cdn.discordapp.com/embed/avatars/0.png")
         embed.add_field(name="ID", value=member.id, inline=False)
         embed.add_field(name="Top Role", value=member.top_role.mention, inline=False)
         embed.add_field(name=f"Roles: {len(roles)}", value=role_string, inline=False)

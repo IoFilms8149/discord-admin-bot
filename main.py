@@ -9,6 +9,8 @@ import sqlite3
 load_dotenv()
 
 BOT_TOKEN = os.getenv("TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("TOKEN not set in .env")
 class MyBot(commands.Bot):
     def __init__(self):
         # Set up intents
@@ -17,9 +19,13 @@ class MyBot(commands.Bot):
         intents.members = True
         super().__init__(command_prefix="!", intents=intents)
     async def setup_hook(self):
+        with sqlite3.connect("users.db", timeout=10) as con:
+            con.execute("PRAGMA journal_mode=WAL")
+            con.execute("PRAGMA synchronous=NORMAL")
         await self.load_extension("cogs.utility")
         await self.load_extension("cogs.moderation")
         await self.load_extension("cogs.stats")
+        await self.load_extension("cogs.fun")
         try:
             synced = await self.tree.sync()
             print(f"Successfully synced {len(synced)} commands.")

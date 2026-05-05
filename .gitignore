@@ -4,3 +4,5 @@ __pycache__/
 users.db-journal
 users.db
 *.db
+users.db-shm
+users.db-wal

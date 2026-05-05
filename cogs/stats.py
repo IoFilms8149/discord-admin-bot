@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-import sqlite3
+from db import get_db
 
 class leaderboarview(discord.ui.View):
     def __init__(self, bot, total_pages):
@@ -11,12 +11,8 @@ class leaderboarview(discord.ui.View):
         self.total_pages = total_pages
     async def get_page_embed(self):
         offset = self.current_page * 10
-
-        con = sqlite3.connect("users.db")
-        cursor = con.cursor()
-        cursor.execute("SELECT username, xp FROM levels ORDER BY xp DESC LIMIT 10 OFFSET ?", (offset,))
-        data = cursor.fetchall()
-        con.close()
+        with get_db() as con:
+            data = con.execute("SELECT username, xp FROM levels ORDER BY xp DESC LIMIT 10 OFFSET ?", (offset,)).fetchall()
         embed = discord.Embed(
             title="🏆 Server Leaderboard:",
             description=f"Top Members (Page {self.current_page + 1})",
@@ -54,18 +50,17 @@ class Stats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # Connects to database
-        self.con = sqlite3.connect("users.db")
-        self.cur = self.con.cursor()
-        self.cur.execute("""
-            CREATE TABLE IF NOT EXISTS levels (
-                user_id INTEGER PRIMARY KEY,
-                username TEXT,
-                avatar_url TEXT,
-                xp INTEGER DEFAULT 0,
-                level INTEGER DEFAULT 1
-            )
-        """)
-        self.con.commit()
+        with get_db() as con:
+            con.execute("""
+                CREATE TABLE IF NOT EXISTS levels (
+                    user_id INTEGER PRIMARY KEY,
+                    username TEXT,
+                    avatar_url TEXT,
+                    xp INTEGER DEFAULT 0,
+                    level INTEGER DEFAULT 1,
+                    balance INTEGER DEFAULT 100
+                )
+            """)
     @commands.Cog.listener()
     async def on_message(self, message):
         # Adds 5 XP when an user sends a message
@@ -73,28 +68,33 @@ class Stats(commands.Cog):
             return
         user_id = message.author.id
         username = message.author.name
-        avatar_url = str(message.author.avatar.url) if message.author.avatar else "https://cdn.discordapp.com/embed/avatars/0.png" 
-        self.cur.execute("UPDATE LEVELS SET avatar_url = ? WHERE user_id = ?", (avatar_url, user_id,))
-        self.cur.execute("""
-        INSERT INTO levels (user_id, username, xp) VALUES (?, ?, 5) ON CONFLICT(user_id) DO UPDATE SET xp = xp + 5, username = excluded.username
-        """, (user_id, username))
-        self.con.commit()
+        balance = 100
+        avatar_url = str(message.author.avatar.url) if message.author.avatar else "https://cdn.discordapp.com/embed/avatars/0.png"
+        with get_db() as con:
+            con.execute("UPDATE LEVELS SET avatar_url = ? WHERE user_id = ?", (avatar_url, user_id,))
+            con.execute("""
+                INSERT INTO levels (user_id, username, xp, balance) 
+                VALUES (?, ?, 5, 100) 
+                ON CONFLICT(user_id) DO UPDATE SET 
+                xp = xp + 5, 
+                username = excluded.username
+            """, (user_id, username))
 
-        self.cur.execute("SELECT xp, level FROM levels WHERE user_id = ?", (user_id,))
-        xp, level = self.cur.fetchone()
+            row = con.execute("SELECT xp, level FROM levels WHERE user_id = ?", (user_id,)).fetchone()
+        xp, level = row["xp"], row["level"]
         # Levels a member up
         new_level = 5 * (level ** 2) + 50 * level + 100
         if xp >= new_level:
             actual_new_level = level + 1
-            self.cur.execute("UPDATE levels SET level = ? WHERE user_id = ?", (actual_new_level, user_id,))
-            self.con.commit()
+            with get_db() as con:
+                con.execute("UPDATE levels SET level = ? WHERE user_id = ?", (actual_new_level, user_id,))
 
             await message.channel.send(f"{message.author.mention} has leveled up to **Level {actual_new_level}**!")
     # Checks the user's rank
     @app_commands.command(name="rank", description="Checks your current XP and level")
     async def rank(self, interaction: discord.Interaction):
-        self.cur.execute("SELECT xp, level FROM levels WHERE user_id = ?", (interaction.user.id,))
-        result = self.cur.fetchone()
+        with get_db() as con:
+            result = con.execute("SELECT xp, level FROM levels WHERE user_id = ?", (interaction.user.id,)).fetchone()
         if result:
             xp, level = result
             await interaction.response.send_message(f"**{interaction.user.display_name}**, you are **Level {level}** with **{xp} XP**!")
@@ -102,8 +102,8 @@ class Stats(commands.Cog):
             await interaction.response.send_message("You haven't sent any messages yet!")
     @app_commands.command(name="leaderboard", description="Check which members have the highest amount of XP")
     async def leaderboard(self, interaction: discord.Interaction):
-        self.cur.execute("SELECT COUNT(*) FROM levels")
-        total_users = self.cur.fetchone()[0]
+        with get_db() as con:
+            total_users = con.execute("SELECT COUNT(*) FROM levels").fetchone()[0]
         total_pages = (total_users - 1) // 10 + 1 if total_users > 0 else 1
         view = leaderboarview(self.bot, total_pages)
         embed = await view.get_page_embed()
