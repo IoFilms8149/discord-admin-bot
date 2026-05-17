@@ -29,6 +29,14 @@ class HelpView(discord.ui.View):
         embed.add_field(name="/rank", value="Checks the user's XP and level.", inline=False)
         embed.add_field(name="/leaderboard", value="Displays the most active members of the server.", inline=False)
         await interaction.response.edit_message(embed=embed)
+    @discord.ui.button(label="Economy", style=discord.ButtonStyle.blurple)
+    async def economy_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="Coin commands", color=discord.Color.yellow())
+        embed.add_field(name="/balance", value="Checks user coin balance.", inline=False)
+        embed.add_field(name="/daily", value="Claim 100 free coins every day.")
+        embed.add_field(name="/flip [amount] [choice]", value="Bet an amount of coins on a coin flip.")
+        embed.add_field(name="/give [member] [amount]", value="Gives a specified amount of coins to an user.")
+        await interaction.response.edit_message(embed=embed)
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

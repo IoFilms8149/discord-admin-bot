@@ -31,9 +31,13 @@ h3 {
     display: flex;
     list-style: none;
     gap: 40px;
-    color: white;
     flex-grow: 1; 
     margin-right: 20px; 
+}
+.links a:hover {
+  background-color: #232323;
+  color: black;
+  transition: 250ms;
 }
 .nav-logo {
     color: #7289da;

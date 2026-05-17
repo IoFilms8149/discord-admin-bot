@@ -17,7 +17,7 @@ class Fun(commands.Cog):
 
         bal = row[0] if row else 0
         if member == interaction.user:
-            await interaction.response.send_message(f"You currently have **{bal}** coins!", ephemeral=True)
+            await interaction.response.send_message(f"🪙 You currently have **{bal}** coins!", ephemeral=True)
         else:
             await interaction.response.send_message(f"**{member.display_name}** currently has **{bal}** coins!", ephemeral=True)
     # Flip Coin Command
@@ -68,6 +68,32 @@ class Fun(commands.Cog):
                 f"Please come back later. Your next daily reward is in **{hours}** hours and **{minutes}** minutes.",
                 ephemeral=True
             )
+    # Set Coins Command (PERMISSIONS NEEDED)
+    @app_commands.command(name="setcoins", description="Set any amount of coins to an user")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def setcoins(self, interaction: discord.Interaction, amount: int, member: discord.Member = None):
+        with get_db() as con:
+            con.execute("UPDATE levels SET balance = ? WHERE user_id = ?", (amount, member.id))
+            await interaction.response.send_message(f"✅ Successfully set **{amount}** coins to **{member.display_name}**", ephemeral=True)
+
+    # Give Coomand
+    @app_commands.command(name="give", description="Gives an amount of coins to an user")
+    async def give(self, interaction: discord.Interaction, member: discord.Member, amount: int):
+        if amount <= 0:
+            await interaction.response.send_message("You must give at least 1 coin!", ephemeral=True)
+            return
+        if member == interaction.user:
+            await interaction.response.send_message("You can't give coins to yourself!", ephemeral=True)
+            return
+        with get_db() as con:
+            row = con.execute("SELECT balance FROM levels WHERE user_id = ?", (interaction.user.id,)).fetchone()
+            current_bal = row[0] if row else 0
+            if amount > current_bal:
+                await interaction.response.send_message("❌ You don't have enough coins!", ephemeral=True)
+                return
+            con.execute("UPDATE levels SET balance = balance - ? WHERE user_id = ?", (amount, interaction.user.id))
+            con.execute("UPDATE levels SET balance = balance + ? WHERE user_id = ?", (amount, member.id))
+        await interaction.response.send_message(f"✅ Successfully gave **{amount}** coins to {member.mention}!")
 
 async def setup(bot):
     await bot.add_cog(Fun(bot))

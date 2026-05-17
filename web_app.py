@@ -26,7 +26,6 @@ def home():
         role_count = info["role_count"] if info else 0
         date_created = info["date_created"] if info else "Error"
         con.close()
-        status = "Offline"
         return render_template("index.html", 
                                count=count, 
                                warn_count=warn_count, 
@@ -59,9 +58,9 @@ def leaderboard():
         con = sqlite3.connect("users.db")
         con.row_factory = sqlite3.Row
         cur = con.cursor()
-        cur.execute("SELECT username, user_id, level, xp FROM levels ORDER BY level DESC, xp DESC LIMIT 10")
+        cur.execute("SELECT username, user_id, level, xp, balance FROM levels ORDER BY level DESC, xp DESC LIMIT 10")
         users = cur.fetchall()
-        con.close
+        con.close()
         return render_template("leaderboard.html",users=users)
     except Exception as e:
         return f"Error loading leaderboard: {e}"
@@ -70,7 +69,7 @@ def search():
     user_id = request.form.get("target_id")
     if user_id and user_id.isdigit():
         return redirect(url_for("profile", user_id=user_id))
-    return redirect(url_for("index"))
+    return redirect(url_for("home"))
 @app.route("/profile/<int:user_id>")
 def profile(user_id):
     try:
