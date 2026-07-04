@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from db import get_db
 
 class HelpView(discord.ui.View):
     def __init__(self, bot):
@@ -58,10 +59,15 @@ class Utility(commands.Cog):
                 title=f"User Info - {member.display_name}",
                 color=member.color
             )
-        embed.set_thumbnail(url=member.display_name if member.avatar else "https://cdn.discordapp.com/embed/avatars/0.png")
+        with get_db() as con:
+            balance = con.execute("SELECT balance FROM levels WHERE user_id = ?", (member.id,)).fetchone()
+            bal = balance["balance"] if balance else 0
+        embed.set_thumbnail(url=member.avatar.url if member.avatar else "https://cdn.discordapp.com/embed/avatars/0.png")
         embed.add_field(name="ID", value=member.id, inline=False)
         embed.add_field(name="Top Role", value=member.top_role.mention, inline=False)
         embed.add_field(name=f"Roles: {len(roles)}", value=role_string, inline=False)
+        embed.add_field(name=f"Coins", value=bal, inline=False)
+        embed.add_field(name="Date Created", value=member.created_at, inline=False)
         embed.set_footer(text=f"Requested by {interaction.user.display_name}")
         await interaction.response.send_message(embed=embed)
     # Help Command

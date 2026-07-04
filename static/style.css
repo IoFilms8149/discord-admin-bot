@@ -1,5 +1,8 @@
+
 body {
     background-color: #23272a;
+    color: white;
+    line-height: 1.6;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 h1 {
@@ -15,8 +18,22 @@ h2 {
 h3 {
     text-decoration: underline;
 }
-.card {
+h3.card {
+    background-color: #1a1a1a;
+    padding: 15px 15px 5px 15px;
+    margin-top: 25px;
+    margin-bottom: 0px;
+    border-radius: 6px 6px 0 0;
+    text-decoration: underline;
+    font-size: 1.1rem;
+}
+p.card {
     color: white;
+    background-color: #1a1a1a;
+    padding: 0 15px 15px 15px;
+    margin-top: 0px;
+    margin-bottom: 25px;
+    border-radius: 0 0 6px 6px;
 }
 .navbar {
     width: 100%;
@@ -30,7 +47,7 @@ h3 {
 .links {
     display: flex;
     list-style: none;
-    gap: 40px;
+    gap: 25px;
     flex-grow: 1; 
     margin-right: 20px; 
 }
@@ -40,10 +57,16 @@ h3 {
   transition: 250ms;
 }
 .nav-logo {
-    color: #7289da;
+    color: white;
     font-size: 1.5rem;
     font-weight: bold;
     padding-left: 20px;
+
+}
+.nav-logo img {
+    height: 24px;
+    vertical-align: middle; 
+    margin-right: 8px;
 }
 .links a:hover {
     color: #7289da;
@@ -75,11 +98,28 @@ td {
     font-size: 0.95rem;
 }
 .search {
-    margin-right: auto;
+    margin-left: auto;
+}
+.search input {
+    padding: 6px 10px;
+    background-color: #23272a;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+    outline: none;
 }
 .search form {
     display: flex;
-    gap: 5px;
+    gap: 8px;
+}
+.search button {
+    padding: 6px 12px;
+    background-color: #7289da;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
 }
 .profile-pic {
     width: 120px;

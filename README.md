@@ -8,6 +8,7 @@ This is a discord bot built using `discord.py` and `SQLite3` designed for server
 - **Latency Tracking**: Has a `/ping` command to check bot responsiveness.
 - **Leveling System**: Tracks users XP stored in a SQLite database.
 - **Dashboard**: Includes a dashboard that monitors the discord bot and server.
+- **Coin System**: Has an economy system with commands.
 - **Moderation Commands**: 
    * `/kick` & `/ban` with automated embedded DM notifications.
    * `/clear` for quick channel cleanup.
